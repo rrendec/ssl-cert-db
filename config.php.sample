@@ -1,0 +1,5 @@
+<?php
+define('DB_HOST', 'localhost');
+define('DB_USER', 'certdb');
+define('DB_PASS', 'certdb');
+define('DB_NAME', 'certdb');
