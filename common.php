@@ -53,6 +53,25 @@ function get_duplicate_cert($data)
     return $id;
 }
 
+function get_pending_cert($when, $offset = 0, $limit = 50)
+{
+    global $db;
+
+    $sql = 'SELECT subject, issuer, MAX(valid_to) AS valid FROM cert ' .
+           'WHERE valid_to > ? GROUP BY subject, issuer ORDER BY valid LIMIT ?, ?';
+    $stmt = mysqli_prepare($db, $sql);
+    mysqli_stmt_bind_param($stmt, 'iii', $when, $offset, $limit);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $out = [];
+    while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+        $out[] = $row;
+    }
+    mysqli_stmt_close($stmt);
+
+    return $out;
+}
+
 function insert_or_update_cert($data, $pem, $id = null)
 {
     global $db;
@@ -72,6 +91,16 @@ function insert_or_update_cert($data, $pem, $id = null)
 
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
+}
+
+function format_datetime($ts)
+{
+    return date('Y-m-d H:i:s', $ts);
+}
+
+function days_between($ts1, $ts2)
+{
+    return round(($ts2 - $ts1) / 86400);
 }
 
 function print_exception($e)
