@@ -36,6 +36,61 @@ function get_canonical_name($attrs)
     return implode('/', $out);
 }
 
+function parse_canonical_name($str)
+{
+    $n = strlen($str);
+    $buf = '';
+    $key = '';
+    $out = [];
+    $esc = false;
+    for ($i = 0; $i < $n; $i++) {
+        if ($esc) {
+            $esc = false;
+            $buf .= $str[$i];
+            continue;
+        }
+        if ($str[$i] == '\\') {
+            $esc = true;
+            continue;
+        }
+        if ($str[$i] == '=') {
+            $key = $buf;
+            $buf = '';
+            continue;
+        }
+        if ($str[$i] == '/') {
+            if ($key !== '') {
+                $out[$key] = $buf;
+            }
+            $key = '';
+            $buf = '';
+            continue;
+        }
+        $buf .= $str[$i];
+    }
+
+    if ($key !== '') {
+        $out[$key] = $buf;
+    }
+
+    return $out;
+}
+
+function canonical_short($str)
+{
+    static $keys = ['CN', 'O'];
+
+    $dn = parse_canonical_name($str);
+    $attrs = [];
+    foreach ($keys as $key) {
+        if (isset($dn[$key])) {
+            $attrs[$key] = $dn[$key];
+        }
+    }
+
+    return get_canonical_name($attrs);
+}
+
 function get_duplicate_cert($data)
 {
     global $db;

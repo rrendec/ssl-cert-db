@@ -18,8 +18,8 @@ $list = get_pending_cert($now);
     </tr>
     <?php foreach ($list as $crt) { ?>
     <tr>
-      <td><?= htmlentities($crt['subject']) ?></td>
-      <td><?= htmlentities($crt['issuer']) ?></td>
+      <td><?= htmlentities(canonical_short($crt['subject'])) ?></td>
+      <td><?= htmlentities(canonical_short($crt['issuer'])) ?></td>
       <td><?= format_datetime($crt['valid']) ?></td>
       <td align="right"><font color="blue"><?= days_between($now, $crt['valid']) ?></font></td>
     </tr>
