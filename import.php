@@ -7,15 +7,24 @@ function request() {
         return [true, null];
     }
 
-    $data = openssl_x509_parse($_REQUEST['pem']);
-    if (!$data) {
-        return [false, 'PEM parse error!'];
+    $total = 0;
+    $new = 0;
+    preg_match_all('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s', $_REQUEST['pem'], $matches);
+    foreach ($matches[0] as $pem) {
+        $data = openssl_x509_parse($pem);
+        if (!$data) {
+            continue;
+        }
+
+        $id = get_duplicate_cert($data);
+        insert_or_update_cert($data, $pem, $id);
+        $total++;
+        if (!$id) {
+            $new++;
+        }
     }
 
-    $id = get_duplicate_cert($data);
-    insert_or_update_cert($data, $_REQUEST['pem'], $id);
-
-    return [true, 'Import successful!'];
+    return [true, sprintf('%d certificate(s) imported (%d new)', $total, $new)];
 }
 
 ?>
