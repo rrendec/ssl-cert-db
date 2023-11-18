@@ -108,12 +108,24 @@ function get_duplicate_cert($data)
     return $id;
 }
 
-function get_pending_cert($when, $offset = 0, $limit = 50)
+function get_aggregate_cert($type, $when, $offset = 0, $limit = 50)
 {
     global $db;
 
-    $sql = 'SELECT subject, issuer, MAX(valid_to) AS valid FROM cert ' .
-           'WHERE valid_to > ? GROUP BY subject, issuer ORDER BY valid LIMIT ?, ?';
+    switch ($type) {
+    case 'pending':
+        $sql = 'SELECT subject, issuer, MAX(valid_to) AS valid FROM cert ' .
+               'WHERE valid_to > ? GROUP BY subject, issuer ORDER BY valid LIMIT ?, ?';
+        break;
+    case 'expired':
+        $sql = 'SELECT * FROM ('.
+               '    SELECT subject, issuer, MAX(valid_to) AS valid FROM cert' .
+               '    GROUP BY subject, issuer' .
+               ') AS subquery WHERE valid < ? ORDER BY valid DESC LIMIT ?, ?';
+        break;
+    default:
+        return [];
+    }
     $stmt = mysqli_prepare($db, $sql);
     mysqli_stmt_bind_param($stmt, 'iii', $when, $offset, $limit);
     mysqli_stmt_execute($stmt);

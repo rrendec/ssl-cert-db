@@ -3,7 +3,8 @@
 require_once('common.php');
 
 $now = time();
-$list = get_pending_cert($now);
+$type = isset($_REQUEST['type']) ? $_REQUEST['type'] : 'pending';
+$list = get_aggregate_cert($type, $now);
 
 ?>
 <html>
