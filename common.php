@@ -108,6 +108,19 @@ function get_duplicate_cert($data)
     return $id;
 }
 
+function fetch_results_assoc($stmt)
+{
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $out = [];
+    while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+        $out[] = $row;
+    }
+    mysqli_stmt_close($stmt);
+
+    return $out;
+}
+
 function get_aggregate_cert($type, $when, $offset = 0, $limit = 50)
 {
     global $db;
@@ -128,15 +141,34 @@ function get_aggregate_cert($type, $when, $offset = 0, $limit = 50)
     }
     $stmt = mysqli_prepare($db, $sql);
     mysqli_stmt_bind_param($stmt, 'iii', $when, $offset, $limit);
+
+    return fetch_results_assoc($stmt);
+}
+
+function get_history($subject, $issuer, $offset = 0, $limit = 50)
+{
+    global $db;
+
+    $sql = 'SELECT id, subject, issuer, valid_to AS valid FROM cert ' .
+           'WHERE subject=? AND issuer=? ORDER BY valid DESC LIMIT ?, ?';
+    $stmt = mysqli_prepare($db, $sql);
+    mysqli_stmt_bind_param($stmt, 'ssii', $subject, $issuer, $offset, $limit);
+
+    return fetch_results_assoc($stmt);
+}
+
+function get_cert_pem($id)
+{
+    global $db;
+
+    $stmt = mysqli_prepare($db, 'SELECT pem FROM cert WHERE id=?');
+    mysqli_stmt_bind_param($stmt, 'i', $id);
     mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $out = [];
-    while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-        $out[] = $row;
-    }
+    mysqli_stmt_bind_result($stmt, $pem);
+    mysqli_stmt_fetch($stmt);
     mysqli_stmt_close($stmt);
 
-    return $out;
+    return $pem;
 }
 
 function insert_or_update_cert($data, $pem, $id = null)

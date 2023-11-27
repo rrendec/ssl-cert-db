@@ -3,13 +3,18 @@
 require_once('common.php');
 
 $now = time();
-$type = isset($_REQUEST['type']) ? $_REQUEST['type'] : 'pending';
-$list = get_aggregate_cert($type, $now);
+$list = get_history($_REQUEST['subject'], $_REQUEST['issuer']);
+
+function bgcolor($crt)
+{
+    global $now;
+
+    return $crt['valid'] < $now ? '#ffeeee' : '#eeffee';
+}
 
 function href($crt)
 {
-    return sprintf('history.php?subject=%s&issuer=%s',
-                   urlencode($crt['subject']), urlencode($crt['issuer']));
+    return sprintf('details.php?id=%s', urlencode($crt['id']));
 }
 
 ?>
@@ -24,7 +29,7 @@ function href($crt)
       <th>Days Left</th>
     </tr>
     <?php foreach ($list as $crt) { ?>
-    <tr>
+    <tr style="background: <?= bgcolor($crt) ?>">
       <td><a href="<?= href($crt)?>"><?= htmlentities(canonical_short($crt['subject'])) ?></a></td>
       <td><?= htmlentities(canonical_short($crt['issuer'])) ?></td>
       <td><?= format_datetime($crt['valid']) ?></td>
